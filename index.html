@@ -5,379 +5,61 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="RNL Check">
-  <title>RNL Dashboard</title>
+  <meta name="apple-mobile-web-app-title" content="RNL Live">
+  <title>RNL Live App</title>
   
   <style>
-    :root {
-      --bg: #0d1117;
-      --card-bg: #161b22;
-      --card-border: #30363d;
-      --accent: #facc15;
-      --text: #f0f6fc;
-      --muted: #8b949e;
-      --win: #238636;
-      --loss: #da3633;
-    }
-
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      -webkit-tap-highlight-color: transparent;
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
     }
 
-    body {
-      background: var(--bg);
-      color: var(--text);
-      padding: max(env(safe-area-inset-top), 20px) 16px max(env(safe-area-inset-bottom), 20px) 16px;
-      min-height: 100vh;
-    }
-
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 16px;
-    }
-
-    .title-group h1 {
-      font-size: 1.35rem;
-      font-weight: 700;
-      color: var(--accent);
-    }
-
-    .title-group p {
-      font-size: 0.8rem;
-      color: var(--muted);
-    }
-
-    button#refresh-btn {
-      background: #21262d;
-      border: 1px solid #484f58;
-      color: var(--text);
-      padding: 9px 14px;
-      border-radius: 10px;
-      font-size: 0.85rem;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      cursor: pointer;
-    }
-
-    button#refresh-btn:active {
-      background: #30363d;
-      transform: scale(0.97);
-    }
-
-    .spinner {
-      display: inline-block;
-      animation: spin 0.8s linear infinite;
-    }
-
-    @keyframes spin {
-      100% { transform: rotate(360deg); }
-    }
-
-    .status-msg {
-      font-size: 0.8rem;
-      padding: 10px 12px;
-      border-radius: 8px;
-      margin-bottom: 14px;
-      background: #1c2128;
-      border: 1px solid var(--card-border);
-      color: var(--muted);
-    }
-    .status-error {
-      background: rgba(218, 54, 51, 0.15);
-      border-color: var(--loss);
-      color: #ff7b72;
-    }
-    .status-success {
-      background: rgba(35, 134, 54, 0.15);
-      border-color: var(--win);
-      color: #7ee787;
-    }
-
-    .card {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 14px;
-      padding: 14px;
-      margin-bottom: 14px;
-    }
-
-    .card-label {
-      font-size: 0.7rem;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--muted);
-      margin-bottom: 8px;
-    }
-
-    .next-box {
-      border-left: 4px solid var(--accent);
-    }
-
-    .match-teams {
-      font-size: 1.05rem;
-      font-weight: 600;
-      margin-bottom: 6px;
-    }
-
-    .match-meta {
-      font-size: 0.8rem;
-      color: var(--muted);
+    body, html {
+      height: 100vh;
+      width: 100vw;
+      background-color: #0d1117;
       display: flex;
       flex-direction: column;
-      gap: 3px;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
     }
 
-    .match-row {
+    /* Simuliert eine native iOS-App-Leiste im Dark Mode */
+    .app-header {
+      background-color: #161b22;
+      padding-top: max(env(safe-area-inset-top), 20px);
+      padding-bottom: 12px;
       display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 9px 10px;
-      background: #0d1117;
-      border-radius: 8px;
-      margin-bottom: 8px;
-      font-size: 0.85rem;
+      justify-content: center;
+      align-items: flex-end;
+      border-bottom: 1px solid #30363d;
+      z-index: 10;
     }
 
-    .match-row:last-child {
-      margin-bottom: 0;
-    }
-
-    .score {
+    .app-title {
+      color: #facc15;
       font-weight: 700;
-      padding: 3px 6px;
-      border-radius: 4px;
-      background: var(--card-border);
-      min-width: 55px;
-      text-align: center;
+      font-size: 1.1rem;
+      letter-spacing: 0.5px;
     }
 
-    table.league-table {
+    /* Lädt die originale Webseite nahtlos in den unteren Bereich */
+    iframe {
+      flex-grow: 1;
       width: 100%;
-      border-collapse: collapse;
-      font-size: 0.8rem;
+      border: none;
+      background-color: #ffffff; /* Hintergrund von Handball.net */
     }
-
-    table.league-table th {
-      text-align: left;
-      color: var(--muted);
-      padding: 6px 4px;
-      border-bottom: 1px solid var(--card-border);
-    }
-
-    table.league-table td {
-      padding: 7px 4px;
-      border-bottom: 1px solid #21262d;
-    }
-
-    .text-center { text-align: center; }
-    .text-right { text-align: right; }
-    .highlight-row { background: rgba(250, 204, 21, 0.12); font-weight: 600; }
   </style>
 </head>
 <body>
 
-  <header>
-    <div class="title-group">
-      <h1 id="team-title">Rhein-Neckar Löwen</h1>
-      <p id="league-title">Lade Spieldaten...</p>
-    </div>
-    <button id="refresh-btn" onclick="fetchLiveSchedule()">
-      <span id="btn-icon">↻</span>
-      <span id="btn-label">Aktualisieren</span>
-    </button>
-  </header>
-
-  <div id="status-box" class="status-msg">Verbindung wird aufgebaut...</div>
-
-  <!-- Nächstes Spiel -->
-  <div class="card next-box">
-    <div class="card-label">Nächstes Spiel</div>
-    <div class="match-teams" id="next-teams">Suche Anwurf...</div>
-    <div class="match-meta">
-      <span id="next-date">📅 --</span>
-      <span id="next-location">📍 --</span>
-    </div>
+  <div class="app-header">
+    <div class="app-title">Rhein-Neckar Löwen</div>
   </div>
 
-  <!-- Letzte Spiele -->
-  <div class="card">
-    <div class="card-label">Letzte Ergebnisse</div>
-    <div id="results-container">
-      <div style="font-size: 0.85rem; color: var(--muted);">Warte auf Server...</div>
-    </div>
-  </div>
+  <iframe src="https://www.handball.net/team/87025?season_id=2627" sandbox="allow-scripts allow-same-origin allow-forms"></iframe>
 
-  <!-- Tabelle -->
-  <div class="card">
-    <div class="card-label">Tabelle</div>
-    <table class="league-table">
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>Mannschaft</th>
-          <th class="text-center">Sp.</th>
-          <th class="text-center">Diff.</th>
-          <th class="text-right">Pkt</th>
-        </tr>
-      </thead>
-      <tbody id="table-body">
-        <tr><td colspan="5" class="text-center" style="color: var(--muted); padding: 10px;">Lade Tabelle...</td></tr>
-      </tbody>
-    </table>
-  </div>
-
-  <script>
-    const TARGET_URL = "https://www.handball.net/team/87025?season_id=2627";
-    // Jina Reader fungiert als Headless-Browser und passiert Cloudflare
-    const JINA_ENDPOINT = `https://r.jina.ai/${TARGET_URL}`;
-
-    async function fetchLiveSchedule() {
-      const btn = document.getElementById("refresh-btn");
-      const icon = document.getElementById("btn-icon");
-      const label = document.getElementById("btn-label");
-      const status = document.getElementById("status-box");
-
-      btn.disabled = true;
-      icon.classList.add("spinner");
-      label.textContent = "Lädt...";
-      status.className = "status-msg";
-      status.textContent = "Umgehe Cloudflare-Schutz & lese Daten aus...";
-
-      try {
-        // Fordert das gerenderte HTML an
-        const response = await fetch(JINA_ENDPOINT, {
-          headers: {
-            'X-Return-Format': 'html'
-          }
-        });
-
-        if (!response.ok) throw new Error(`Server antwortete mit Code ${response.status}`);
-        const html = await response.text();
-
-        // Extrahiere das integrierte Next.js JSON-Objekt
-        const match = html.match(/<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/);
-        
-        if (match && match[1]) {
-          const parsed = JSON.parse(match[1]);
-          renderDashboard(parsed);
-          status.className = "status-msg status-success";
-          status.textContent = `Stand: ${new Date().toLocaleTimeString('de-DE', {hour: '2-digit', minute:'2-digit'})} Uhr erfolgreich aktualisiert ✓`;
-        } else {
-          // Fallback: Direkte Textanalyse des gerenderten Markdowns
-          parseMarkdownFallback(html);
-          status.className = "status-msg status-success";
-          status.textContent = `Stand: ${new Date().toLocaleTimeString('de-DE', {hour: '2-digit', minute:'2-digit'})} Uhr (Textmodus) ✓`;
-        }
-
-      } catch (err) {
-        status.className = "status-msg status-error";
-        status.textContent = "Fehler beim Laden: " + err.message;
-      } finally {
-        btn.disabled = false;
-        icon.classList.remove("spinner");
-        label.textContent = "Aktualisieren";
-      }
-    }
-
-    function renderDashboard(data) {
-      const p = data?.props?.pageProps;
-      if (!p) return;
-
-      if (p.team?.name) document.getElementById("team-title").innerText = p.team.name;
-      if (p.team?.league?.name) document.getElementById("league-title").innerText = p.team.league.name;
-
-      const matches = p.matches || p.team?.matches || [];
-      const now = new Date();
-      let nextMatch = null;
-      let pastMatches = [];
-
-      matches.forEach(m => {
-        const mDate = new Date(m.date);
-        if (m.homeScore !== null && m.guestScore !== null) {
-          pastMatches.push(m);
-        } else if (!nextMatch && mDate >= now) {
-          nextMatch = m;
-        }
-      });
-
-      // Nächstes Spiel
-      if (nextMatch) {
-        document.getElementById("next-teams").innerText = `${nextMatch.homeTeamName} vs. ${nextMatch.guestTeamName}`;
-        const d = new Date(nextMatch.date).toLocaleString("de-DE", {
-          weekday: 'short', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
-        });
-        document.getElementById("next-date").innerText = `📅 ${d} Uhr`;
-        document.getElementById("next-location").innerText = `📍 ${nextMatch.venue || 'Spielstätte ausstehend'}`;
-      } else {
-        document.getElementById("next-teams").innerText = "Kein Spiel angesetzt";
-      }
-
-      // Letzte Spiele
-      const container = document.getElementById("results-container");
-      container.innerHTML = "";
-      const recent = pastMatches.slice(-4).reverse();
-
-      if (recent.length === 0) {
-        container.innerHTML = '<div style="font-size:0.85rem; color:var(--muted);">Noch keine beendeten Spiele vorliegend</div>';
-      } else {
-        recent.forEach(m => {
-          const row = document.createElement("div");
-          row.className = "match-row";
-          row.innerHTML = `<span>${m.homeTeamName} - ${m.guestTeamName}</span><span class="score">${m.homeScore}:${m.guestScore}</span>`;
-          container.appendChild(row);
-        });
-      }
-
-      // Tabelle
-      const standings = p.standings || p.team?.league?.standings || [];
-      const tbody = document.getElementById("table-body");
-      tbody.innerHTML = "";
-
-      if (standings.length > 0) {
-        standings.forEach((row, i) => {
-          const isLöwen = row.teamId === 87025 || row.teamName?.includes("Löwen");
-          const tr = document.createElement("tr");
-          if (isLöwen) tr.className = "highlight-row";
-          tr.innerHTML = `
-            <td>${row.position || i + 1}</td>
-            <td>${row.teamName}</td>
-            <td class="text-center">${row.gamesPlayed || 0}</td>
-            <td class="text-center">${(row.goalsFor - row.goalsAgainst) || 0}</td>
-            <td class="text-right">${row.pointsWon}:${row.pointsLost}</td>
-          `;
-          tbody.appendChild(tr);
-        });
-      }
-    }
-
-    function parseMarkdownFallback(text) {
-      // Notfall-Parser für Markdown-Tabellenzeilen
-      const lines = text.split("\n");
-      const tableRows = lines.filter(l => l.includes("|") && !l.includes("---") && !l.includes("Mannschaft"));
-      const tbody = document.getElementById("table-body");
-      
-      if (tableRows.length > 0) {
-        tbody.innerHTML = "";
-        tableRows.forEach(line => {
-          const cols = line.split("|").map(c => c.trim()).filter(c => c !== "");
-          if (cols.length >= 5) {
-            const tr = document.createElement("tr");
-            tr.innerHTML = `<td>${cols[0]}</td><td>${cols[1]}</td><td class="text-center">${cols[2]}</td><td class="text-center">-</td><td class="text-right">${cols[cols.length-1]}</td>`;
-            tbody.appendChild(tr);
-          }
-        });
-      }
-    }
-
-    window.addEventListener("DOMContentLoaded", fetchLiveSchedule);
-  </script>
 </body>
 </html>

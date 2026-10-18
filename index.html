@@ -50,32 +50,6 @@
       text-decoration: none;
     }
 
-    .tab-bar {
-      background-color: #161b22;
-      padding: 8px 14px 12px;
-      display: flex;
-      gap: 8px;
-      border-bottom: 1px solid #30363d;
-    }
-
-    .tab-btn {
-      flex: 1;
-      background-color: #21262d;
-      color: #8b949e;
-      border: 1px solid #30363d;
-      padding: 8px 0;
-      border-radius: 8px;
-      font-size: 0.85rem;
-      font-weight: 600;
-      cursor: pointer;
-    }
-
-    .tab-btn.active {
-      background-color: #facc15;
-      color: #0d1117;
-      border-color: #facc15;
-    }
-
     .content {
       flex: 1;
       overflow-y: auto;
@@ -93,6 +67,15 @@
       padding: 0 4px;
     }
 
+    .status-dot {
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background-color: #3fb950;
+      margin-right: 6px;
+    }
+
     .match-card {
       background-color: #161b22;
       border: 1px solid #30363d;
@@ -101,22 +84,31 @@
       margin-bottom: 12px;
     }
 
+    .match-card.highlight {
+      border-color: #facc15;
+      box-shadow: 0 0 14px rgba(250, 204, 21, 0.15);
+    }
+
     .match-meta {
       display: flex;
       justify-content: space-between;
+      align-items: center;
       font-size: 0.75rem;
       color: #8b949e;
-      margin-bottom: 10px;
+      margin-bottom: 12px;
     }
 
     .badge {
-      padding: 2px 8px;
+      padding: 3px 8px;
       border-radius: 6px;
       font-weight: 700;
       font-size: 0.68rem;
+      letter-spacing: 0.3px;
     }
     .badge.done { background: rgba(63, 185, 80, 0.18); color: #3fb950; }
-    .badge.upcoming { background: rgba(250, 204, 21, 0.18); color: #facc15; }
+    .badge.next { background: #facc15; color: #0d1117; }
+    .badge.upcoming { background: rgba(250, 204, 21, 0.15); color: #facc15; }
+    .badge.live { background: rgba(248, 81, 73, 0.25); color: #f85149; }
 
     .teams-row {
       display: flex;
@@ -125,7 +117,12 @@
       gap: 10px;
     }
 
-    .team { flex: 1; font-size: 0.92rem; font-weight: 600; }
+    .team {
+      flex: 1;
+      font-size: 0.9rem;
+      font-weight: 600;
+      line-height: 1.3;
+    }
     .team.rnl { color: #facc15; font-weight: 700; }
     .team.away { text-align: right; }
 
@@ -134,150 +131,168 @@
       padding: 6px 12px;
       border-radius: 8px;
       font-weight: 800;
-      font-size: 1rem;
-      min-width: 70px;
+      font-size: 0.98rem;
+      min-width: 74px;
       text-align: center;
       border: 1px solid #30363d;
+      white-space: nowrap;
     }
 
-    .raw-box {
-      background-color: #161b22;
-      border: 1px solid #30363d;
-      border-radius: 12px;
-      padding: 14px;
-      font-size: 0.85rem;
-    }
-
-    .raw-line {
-      padding: 7px 0;
-      border-bottom: 1px solid #21262d;
-      color: #c9d1d9;
-    }
-    .raw-line.rnl-line { color: #facc15; font-weight: 700; }
-    .raw-line.score-line { color: #3fb950; font-weight: 700; font-size: 0.95rem; }
-
-    .info-msg {
-      background: #161b22;
-      border: 1px solid #30363d;
-      border-radius: 12px;
-      padding: 20px;
-      text-align: center;
+    .venue {
+      margin-top: 10px;
+      padding-top: 8px;
+      border-top: 1px solid #21262d;
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.73rem;
       color: #8b949e;
-      font-size: 0.9rem;
-      line-height: 1.5;
     }
-
-    .hidden { display: none !important; }
   </style>
 </head>
 <body>
 
   <div class="app-header">
-    <a href="https://www.handball.net/team/87025?season_id=2627" target="_blank" class="icon-btn" title="Original öffnen">↗</a>
+    <a href="https://www.handball.net/team/87025?season_id=2627" target="_blank" class="icon-btn" title="Auf Handball.net öffnen">↗</a>
     <div class="title-group">
-      <div class="app-title">Rhein-Neckar Löwen U17</div>
-      <div class="app-subtitle">Live-Abruf via Camoufox</div>
+      <div class="app-title" id="team-title">Rhein-Neckar Löwen U17</div>
+      <div class="app-subtitle" id="liga-title">JBLH mB · Vorrunde 7</div>
     </div>
-    <button class="icon-btn" onclick="loadLiveJson()" title="Neu laden">↻</button>
-  </div>
-
-  <div class="tab-bar">
-    <button class="tab-btn active" onclick="switchTab('cards', this)">Erkannte Spiele</button>
-    <button class="tab-btn" onclick="switchTab('raw', this)">Kompletter Seiten-Abruf</button>
+    <button class="icon-btn" onclick="loadLiveJson()" title="Aktualisieren">↻</button>
   </div>
 
   <div class="content">
     <div class="status-bar">
-      <span id="sync-status">Prüfe data.json...</span>
+      <span><span class="status-dot"></span><span id="sync-status">Lade Live-Daten...</span></span>
       <span>Team 87025</span>
     </div>
 
-    <div id="view-cards">
-      <div id="matches-container"></div>
-    </div>
-
-    <div id="view-raw" class="hidden">
-      <div class="raw-box" id="raw-container"></div>
-    </div>
+    <div id="matches-container"></div>
   </div>
 
   <script>
-    async function loadLiveJson() {
-      const statusEl = document.getElementById('sync-status');
-      const matchesEl = document.getElementById('matches-container');
-      const rawEl = document.getElementById('raw-container');
-
-      statusEl.innerText = 'Lade data.json...';
-
-      try {
-        // Lädt ausschließlich die von der GitHub Action erzeugte Datei
-        const response = await fetch('./data.json?nocache=' + Date.now());
-        if (!response.ok) {
-          throw new Error('data.json wurde im Repo noch nicht erstellt (HTTP ' + response.status + ')');
-        }
-
-        const data = await response.json();
-        statusEl.innerText = 'Letzter Abruf: ' + (data.updated || 'Unbekannt');
-
-        // 1. Komplette Textzeilen im zweiten Tab rendern
-        const lines = data.raw_lines || [];
-        rawEl.innerHTML = lines.map(l => {
-          const isRnl = l.includes('Löwen');
-          const isScore = /^\d{1,2}\s*:\s*\d{1,2}$/.test(l);
-          return `<div class="raw-line ${isRnl ? 'rnl-line' : ''} ${isScore ? 'score-line' : ''}">${l}</div>`;
-        }).join('');
-
-        // 2. Dynamisch erkannte Spiele als Karten rendern
-        const matches = data.matches || [];
-        if (matches.length > 0) {
-          matchesEl.innerHTML = matches.map(m => `
-            <div class="match-card">
-              <div class="match-meta">
-                <span>${m.date || 'Spieltag'}</span>
-                <span class="badge ${m.status === 'BEENDET' ? 'done' : 'upcoming'}">${m.status}</span>
-              </div>
-              <div class="teams-row">
-                <div class="team ${m.home.includes('Löwen') ? 'rnl' : ''}">${m.home}</div>
-                <div class="score-box">${m.score}</div>
-                <div class="team away ${m.away.includes('Löwen') ? 'rnl' : ''}">${m.away}</div>
-              </div>
-            </div>
-          `).join('');
-        } else {
-          // Falls handball.net das Layout ändert, zeige direkt den gefilterten Live-Stream um "Rhein-Neckar Löwen"
-          const rnlBlocks = [];
-          lines.forEach((line, idx) => {
-            if (line.includes('Löwen')) {
-              const snippet = lines.slice(Math.max(0, idx - 3), Math.min(lines.length, idx + 4)).join(' · ');
-              rnlBlocks.push(snippet);
-            }
-          });
-
-          if (rnlBlocks.length > 0) {
-            matchesEl.innerHTML = rnlBlocks.map(b => `<div class="match-card">${b}</div>`).join('');
-          } else {
-            matchesEl.innerHTML = `<div class="info-msg">Daten geladen, aber keine Spiele im Text gefunden. Schau oben rechts in den Tab "Kompletter Seiten-Abruf", um zu sehen, was handball.net geliefert hat.</div>`;
-          }
-        }
-
-      } catch (err) {
-        statusEl.innerText = 'Warte auf ersten GitHub-Action-Lauf';
-        matchesEl.innerHTML = `
-          <div class="info-msg">
-            <strong>Noch keine <code>data.json</code> gefunden!</strong><br><br>
-            Damit die Spiele echt und dynamisch geladen werden, muss dein GitHub-Action-Job (aus deinem Screenshot) einmal komplett grün durchlaufen.<br><br>
-            1. Aktiviere in GitHub unter <em>Settings → Actions → General → Workflow permissions</em> die Option <strong>Read and write permissions</strong>.<br>
-            2. Starte den Job in der GitHub-App erneut.
-          </div>
-        `;
-      }
+    // Formatiert "RHEIN-NECKAR LÖWEN" oder "TRAININGSHALLE (TRAININGSHALLE)" schöner
+    function cleanVenue(rawVenue) {
+      if (!rawVenue) return '';
+      // Entfernt doppelte Klammerwerte wie "TRAININGSHALLE (TRAININGSHALLE)"
+      return rawVenue.replace(/\s*\([^)]+\)$/, '');
     }
 
-    function switchTab(tab, btn) {
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      document.getElementById('view-cards').classList.toggle('hidden', tab !== 'cards');
-      document.getElementById('view-raw').classList.toggle('hidden', tab !== 'raw');
+    // Liest alle Spielblöcke zu 100% dynamisch aus den raw_lines deiner data.json aus
+    function parseMatchesFromLines(lines) {
+      const matches = [];
+      let nextMarked = false;
+
+      for (let i = 0; i < lines.length; i++) {
+        // Jedes Spiel auf handball.net hat den festen Ankerpunkt "Spielbeginn"
+        if (lines[i] === "Spielbeginn" && i >= 4) {
+          const fullDate = lines[i + 1] || "";
+          const awayTeam = lines[i - 1] || "";
+          
+          let centerBox = "";
+          let homeTeam = "";
+          let rawStatus = "";
+
+          // Fall A: Vor dem Auswärtsteam steht "UHR" (z.B. ["RHEIN-NECKAR LÖWEN", "15:00", "UHR", "JSG BALINGEN-WEILSTETTEN"])
+          if (lines[i - 2] === "UHR") {
+            centerBox = lines[i - 3] + " Uhr";
+            homeTeam = lines[i - 4] || "";
+            rawStatus = lines[i - 6] || "ANSTEHEND";
+          } 
+          // Fall B: Live-Spiel oder Ergebnis steht zwischen den Teams (z.B. ["TEAM A", "28 : 26", "TEAM B"] oder ["TEAM A", "28", ":", "26", "TEAM B"])
+          else if (lines[i - 3] === ":") {
+            centerBox = `${lines[i - 4]} : ${lines[i - 2]}`;
+            homeTeam = lines[i - 5] || "";
+            rawStatus = lines[i - 7] || "LIVE / ENDE";
+          } 
+          else {
+            centerBox = lines[i - 2] || "vs.";
+            homeTeam = lines[i - 3] || "";
+            rawStatus = lines[i - 5] || "SPIEL";
+          }
+
+          // Halle und Spielnummer nach "Spielbeginn" suchen
+          let venue = "";
+          let matchId = "";
+          for (let j = i + 1; j < Math.min(lines.length, i + 14); j++) {
+            if (lines[j] === "Halle" && lines[j + 1]) {
+              venue = cleanVenue(lines[j + 1]);
+            }
+            if (lines[j] === "Spielnummer" && lines[j + 1]) {
+              matchId = lines[j + 1];
+            }
+          }
+
+          let isNext = false;
+          let badgeClass = "upcoming";
+          let badgeText = rawStatus;
+
+          if (rawStatus.includes("ANSTEHEND") && !nextMarked) {
+            isNext = true;
+            nextMarked = true;
+            badgeClass = "next";
+            badgeText = "NÄCHSTES SPIEL";
+          } else if (rawStatus.includes("LIVE")) {
+            badgeClass = "live";
+          } else if (rawStatus.includes("BEENDET") || rawStatus.includes("ENDE")) {
+            badgeClass = "done";
+          }
+
+          matches.push({
+            date: fullDate,
+            home: homeTeam,
+            away: awayTeam,
+            score: centerBox,
+            venue: venue,
+            matchId: matchId,
+            isNext: isNext,
+            badgeClass: badgeClass,
+            badgeText: badgeText
+          });
+        }
+      }
+      return matches;
+    }
+
+    async function loadLiveJson() {
+      const statusEl = document.getElementById('sync-status');
+      const container = document.getElementById('matches-container');
+
+      try {
+        const res = await fetch('./data.json?nocache=' + Date.now());
+        const data = await res.json();
+
+        if (data.team) document.getElementById('team-title').innerText = data.team;
+        if (data.liga) document.getElementById('liga-title').innerText = data.liga;
+        statusEl.innerText = 'Live-Sync: ' + (data.updated || 'Aktiv');
+
+        const matches = parseMatchesFromLines(data.raw_lines || []);
+
+        container.innerHTML = matches.map(m => {
+          const homeIsRnl = m.home.toUpperCase().includes('LÖWEN');
+          const awayIsRnl = m.away.toUpperCase().includes('LÖWEN');
+
+          return `
+            <div class="match-card ${m.isNext ? 'highlight' : ''}">
+              <div class="match-meta">
+                <span>${m.date}</span>
+                <span class="badge ${m.badgeClass}">${m.badgeText}</span>
+              </div>
+              <div class="teams-row">
+                <div class="team ${homeIsRnl ? 'rnl' : ''}">${m.home}</div>
+                <div class="score-box">${m.score}</div>
+                <div class="team away ${awayIsRnl ? 'rnl' : ''}">${m.away}</div>
+              </div>
+              <div class="venue">
+                <span>📍 ${m.venue || 'Halle folgt'}</span>
+                <span>#${m.matchId}</span>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+      } catch (err) {
+        statusEl.innerText = 'Fehler beim Laden der data.json';
+      }
     }
 
     loadLiveJson();

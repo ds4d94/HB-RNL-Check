@@ -24,127 +24,93 @@ jobs:
           pip install camoufox[geoip] beautifulsoup4
           python -m camoufox fetch
 
-      - name: Team 87025 (RNL U17) inklusive Spielplan abrufen
+      - name: Team 87025 (Vergangene + Kommende Spiele) abrufen
         run: |
           python - << 'EOF'
-          import json, re
+          import json
           from datetime import datetime
           from zoneinfo import ZoneInfo
           from camoufox.sync_api import Camoufox
 
-          URL = "https://www.handball.net/team/87025?season_id=2627"
-          captured_json = []
+          # Wir übergeben zusätzlich dateFrom=2026-08-01, damit auch vergangene Spiele geladen werden
+          URL = "https://www.handball.net/team/87025?season_id=2627&dateFrom=2026-08-01&from=2026-08-01"
+          all_lines = []
+          api_responses = []
 
           with Camoufox(headless=True) as browser:
               page = browser.new_page()
 
-              # Fängt alle JSON-Antworten von handball.net im Hintergrund ab
-              def handle_response(response):
+              # Fängt alle Hintergrund-Datenpakete von handball.net ab
+              def on_response(response):
                   try:
-                      ct = response.headers.get("content-type", "")
-                      if "json" in ct or "api" in response.url or "_next/data" in response.url:
-                          captured_json.append({"url": response.url, "data": response.json()})
+                      if "json" in response.headers.get("content-type", ""):
+                          api_responses.append({
+                              "url": response.url,
+                              "data": response.json()
+                          })
                   except Exception:
                       pass
 
-              page.on("response", handle_response)
+              page.on("response", on_response)
               page.goto(URL, wait_until="networkidle", timeout=60000)
               page.wait_for_timeout(3000)
 
-              # 1. Cookie-Banner schließen, falls er die Sicht verdeckt
-              for btn_text in ["Akzeptieren", "Alle akzeptieren", "Zustimmen", "Einverstanden"]:
+              # 1. Cookie-Banner akzeptieren ("Accept all" war in deiner data.json zu sehen!)
+              for text in ["Accept all", "Alle akzeptieren", "Akzeptieren", "Save + Exit"]:
                   try:
-                      btn = page.locator(f"button:has-text('{btn_text}')").first
-                      if btn.is_visible(timeout=1000):
+                      btn = page.locator(f"button:has-text('{text}')").first
+                      if btn.is_visible(timeout=1500):
                           btn.click()
-                          page.wait_for_timeout(1000)
+                          page.wait_for_timeout(1500)
                           break
                   except Exception:
                       pass
 
-              # 2. Gezielt auf den Reiter "Spielplan" klicken, falls vorhanden
-              try:
-                  spielplan_tab = page.locator("text=Spielplan").first
-                  if spielplan_tab.is_visible(timeout=2000):
-                      spielplan_tab.click()
-                      page.wait_for_timeout(3000)
-              except Exception:
-                  pass
+              # 2. Speichere zuerst die aktuellen/kommenden Zeilen
+              text_current = page.inner_text("body")
+              lines_current = [l.strip() for l in text_current.split('\n') if l.strip()]
 
-              # 3. Einmal nach unten scrollen, damit Lazy-Loading-Spiele nachgeladen werden
-              page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
-              page.wait_for_timeout(2000)
+              # 3. Versuche "Frühere Spiele" / Rückwärts-Pfeil / Datum wählen zu triggern
+              lines_past = []
+              for trigger in ["Frühere Spiele", "Vergangene Spiele", "Mehr laden", "Vorherige"]:
+                  try:
+                      el = page.locator(f"button:has-text('{trigger}'), a:has-text('{trigger}')").first
+                      if el.is_visible(timeout=1000):
+                          el.click()
+                          page.wait_for_timeout(2500)
+                          text_past = page.inner_text("body")
+                          lines_past = [l.strip() for l in text_past.split('\n') if l.strip()]
+                          break
+                  except Exception:
+                      pass
 
-              body_text = page.inner_text("body")
+              # 4. Falls "Datum wählen" ein Button mit Links-Pfeil daneben ist: Klicke den Pfeil links neben "Datum wählen"
+              if not lines_past:
+                  try:
+                      date_btn = page.locator("text=Datum wählen").first
+                      if date_btn.is_visible(timeout=1500):
+                          # Suche nach vorherigem Button im gleichen Container (Pfeil zurück)
+                          prev_btn = date_btn.locator("xpath=preceding-sibling::button[1] | ../preceding-sibling::button[1]").first
+                          if prev_btn.is_visible(timeout=1000):
+                              prev_btn.click()
+                              page.wait_for_timeout(3000)
+                              text_past = page.inner_text("body")
+                              lines_past = [l.strip() for l in text_past.split('\n') if l.strip()]
+                  except Exception:
+                      pass
 
-              # 4. Versteckte Next.js-Rohdaten direkt aus dem HTML ziehen
-              next_data_raw = page.evaluate("""() => {
-                  const el = document.getElementById('__NEXT_DATA__');
-                  return el ? JSON.parse(el.textContent) : null;
-              }""")
-
-          lines = [l.strip() for l in body_text.split('\n') if l.strip()]
-
-          # Hilfsfunktion: Durchsucht beliebige JSON-Bäume von handball.net automatisch nach Spielen
-          found_matches = []
-          def find_games_in_json(obj):
-              if isinstance(obj, dict):
-                  # Typische Feldnamen in der handball.net API
-                  home = obj.get("homeTeam") or obj.get("home") or obj.get("teamHome")
-                  away = obj.get("awayTeam") or obj.get("away") or obj.get("teamAway")
-                  if isinstance(home, dict) and isinstance(away, dict):
-                      h_name = home.get("name") or home.get("shortName") or ""
-                      a_name = away.get("name") or away.get("shortName") or ""
-                      h_goals = obj.get("homeGoals", obj.get("goalsHome", home.get("goals")))
-                      a_goals = obj.get("awayGoals", obj.get("goalsAway", away.get("goals")))
-                      starts_at = obj.get("startsAt") or obj.get("date") or obj.get("time") or ""
-                      state = obj.get("state") or obj.get("status") or ""
-                      
-                      if h_name and a_name:
-                          score_str = f"{h_goals} : {a_goals}" if (h_goals is not None and a_goals is not None) else "vs."
-                          found_matches.append({
-                              "date": str(starts_at),
-                              "home": h_name,
-                              "away": a_name,
-                              "score": score_str,
-                              "status": "BEENDET" if h_goals is not None else str(state or "ANSTEHEND")
-                          })
-                  for v in obj.values():
-                      find_games_in_json(v)
-              elif isinstance(obj, list):
-                  for item in obj:
-                      find_games_in_json(item)
-
-          if next_data_raw:
-              find_games_in_json(next_data_raw)
-          for item in captured_json:
-              find_games_in_json(item.get("data"))
-
-          # Falls die Spiele stattdessen im sichtbaren Text stehen, ebenfalls auslesen:
-          if not found_matches:
-              date_re = re.compile(r'\d{2}\.\d{2}\.')
-              score_re = re.compile(r'^(\d{1,2})\s*[:\-]\s*(\d{1,2})$')
-              time_re = re.compile(r'^\d{2}:\d{2}(\s*Uhr)?$')
-
-              for i, line in enumerate(lines):
-                  if (score_re.match(line) or time_re.match(line)) and i >= 1 and i + 1 < len(lines):
-                      window = lines[max(0, i-4):min(len(lines), i+5)]
-                      if any("Löwen" in w or "Erlangen" in w or "Balingen" in w or "Pforzheim" in w for w in window):
-                          date_val = next((w for w in window if date_re.search(w)), "Spieltag")
-                          found_matches.append({
-                              "date": date_val,
-                              "home": lines[i-1],
-                              "away": lines[i+1],
-                              "score": line,
-                              "status": "BEENDET" if (score_re.match(line) and not time_re.match(line)) else "ANSTEHEND"
-                          })
+          # Kombiniere vergangene und kommende Zeilen ohne Duplikate der Spiele
+          combined_lines = lines_past + ["--- TRENNUNG ---"] + lines_current if lines_past else lines_current
 
           now_de = datetime.now(ZoneInfo("Europe/Berlin")).strftime("%d.%m.%Y, %H:%M Uhr")
 
           output = {
+              "team": "Rhein-Neckar Löwen U17 (mB)",
+              "liga": "Jugendbundesliga B-Jugend - Vorrunde 7",
               "updated": now_de,
-              "matches": found_matches,
-              "raw_lines": lines
+              "raw_lines": combined_lines,
+              "api_urls": [r["url"] for r in api_responses],
+              "api_data": api_responses
           }
 
           with open("data.json", "w", encoding="utf-8") as f:
@@ -156,4 +122,4 @@ jobs:
           git config user.name "RNL-Live-Bot"
           git config user.email "bot@github.com"
           git add data.json
-          git diff --staged --quiet || (git commit -m "Update RNL U17 Live-Daten" && git pull --rebase && git push)
+          git diff --staged --quiet || (git commit -m "Update RNL U17 inkl. vergangener Spiele" && git pull --rebase && git push)

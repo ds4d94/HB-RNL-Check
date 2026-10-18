@@ -9,12 +9,7 @@
   <title>RNL U17 Live</title>
   
   <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      -webkit-tap-highlight-color: transparent;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
     body, html {
       height: 100vh;
@@ -27,7 +22,6 @@
       font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
     }
 
-    /* Native iOS-App-Leiste im Dark Mode */
     .app-header {
       background-color: #161b22;
       padding: max(env(safe-area-inset-top), 18px) 16px 12px;
@@ -35,26 +29,11 @@
       justify-content: space-between;
       align-items: center;
       border-bottom: 1px solid #30363d;
-      z-index: 10;
     }
 
-    .title-group {
-      text-align: center;
-      flex: 1;
-    }
-
-    .app-title {
-      color: #facc15;
-      font-weight: 700;
-      font-size: 1.1rem;
-      letter-spacing: 0.3px;
-    }
-
-    .app-subtitle {
-      color: #8b949e;
-      font-size: 0.75rem;
-      margin-top: 2px;
-    }
+    .title-group { text-align: center; flex: 1; }
+    .app-title { color: #facc15; font-weight: 700; font-size: 1.1rem; }
+    .app-subtitle { color: #8b949e; font-size: 0.75rem; margin-top: 2px; }
 
     .icon-btn {
       background: #21262d;
@@ -69,14 +48,8 @@
       justify-content: center;
       cursor: pointer;
       text-decoration: none;
-      transition: transform 0.15s ease;
     }
 
-    .icon-btn:active {
-      transform: scale(0.92);
-    }
-
-    /* Tab-Leiste */
     .tab-bar {
       background-color: #161b22;
       padding: 8px 14px 12px;
@@ -103,7 +76,6 @@
       border-color: #facc15;
     }
 
-    /* Scrollbarer Hauptbereich */
     .content {
       flex: 1;
       overflow-y: auto;
@@ -121,16 +93,6 @@
       padding: 0 4px;
     }
 
-    .status-dot {
-      display: inline-block;
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background-color: #3fb950;
-      margin-right: 5px;
-    }
-
-    /* Spielkarten */
     .match-card {
       background-color: #161b22;
       border: 1px solid #30363d;
@@ -139,31 +101,22 @@
       margin-bottom: 12px;
     }
 
-    .match-card.highlight {
-      border-color: #facc15;
-      box-shadow: 0 0 14px rgba(250, 204, 21, 0.14);
-    }
-
     .match-meta {
       display: flex;
       justify-content: space-between;
-      align-items: center;
       font-size: 0.75rem;
       color: #8b949e;
       margin-bottom: 10px;
     }
 
     .badge {
-      padding: 3px 8px;
+      padding: 2px 8px;
       border-radius: 6px;
       font-weight: 700;
       font-size: 0.68rem;
-      letter-spacing: 0.3px;
     }
-
     .badge.done { background: rgba(63, 185, 80, 0.18); color: #3fb950; }
     .badge.upcoming { background: rgba(250, 204, 21, 0.18); color: #facc15; }
-    .badge.live { background: rgba(248, 81, 73, 0.2); color: #f85149; }
 
     .teams-row {
       display: flex;
@@ -172,13 +125,7 @@
       gap: 10px;
     }
 
-    .team {
-      flex: 1;
-      font-size: 0.92rem;
-      font-weight: 600;
-      line-height: 1.3;
-    }
-
+    .team { flex: 1; font-size: 0.92rem; font-weight: 600; }
     .team.rnl { color: #facc15; font-weight: 700; }
     .team.away { text-align: right; }
 
@@ -187,230 +134,153 @@
       padding: 6px 12px;
       border-radius: 8px;
       font-weight: 800;
-      font-size: 1.05rem;
-      min-width: 72px;
+      font-size: 1rem;
+      min-width: 70px;
       text-align: center;
       border: 1px solid #30363d;
-      white-space: nowrap;
     }
 
-    .venue {
-      margin-top: 10px;
-      padding-top: 8px;
-      border-top: 1px solid #21262d;
-      font-size: 0.75rem;
-      color: #8b949e;
-    }
-
-    /* Live-Rohdaten-Ansicht aus Camoufox (data.json) */
     .raw-box {
       background-color: #161b22;
       border: 1px solid #30363d;
       border-radius: 12px;
       padding: 14px;
       font-size: 0.85rem;
-      line-height: 1.55;
-      color: #c9d1d9;
     }
 
     .raw-line {
-      padding: 6px 0;
+      padding: 7px 0;
       border-bottom: 1px solid #21262d;
+      color: #c9d1d9;
+    }
+    .raw-line.rnl-line { color: #facc15; font-weight: 700; }
+    .raw-line.score-line { color: #3fb950; font-weight: 700; font-size: 0.95rem; }
+
+    .info-msg {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      color: #8b949e;
+      font-size: 0.9rem;
+      line-height: 1.5;
     }
 
-    .raw-line:last-child {
-      border-bottom: none;
-    }
-
-    .raw-line.rnl-line {
-      color: #facc15;
-      font-weight: 600;
-    }
-
-    .hidden {
-      display: none !important;
-    }
+    .hidden { display: none !important; }
   </style>
 </head>
 <body>
 
   <div class="app-header">
-    <a href="https://www.handball.net/team/87025?season_id=2627" target="_blank" class="icon-btn" title="Auf Handball.net öffnen">↗</a>
+    <a href="https://www.handball.net/team/87025?season_id=2627" target="_blank" class="icon-btn" title="Original öffnen">↗</a>
     <div class="title-group">
-      <div class="app-title" id="header-title">Rhein-Neckar Löwen U17</div>
-      <div class="app-subtitle" id="header-sub">JBLH mB · Vorrunde 7</div>
+      <div class="app-title">Rhein-Neckar Löwen U17</div>
+      <div class="app-subtitle">Live-Abruf via Camoufox</div>
     </div>
-    <button class="icon-btn" onclick="loadData()" title="Aktualisieren">↻</button>
+    <button class="icon-btn" onclick="loadLiveJson()" title="Neu laden">↻</button>
   </div>
 
   <div class="tab-bar">
-    <button class="tab-btn active" onclick="switchTab('cards', this)">Spielplan & Scores</button>
-    <button class="tab-btn" onclick="switchTab('livefeed', this)">Handball.net Direkt-Feed</button>
+    <button class="tab-btn active" onclick="switchTab('cards', this)">Erkannte Spiele</button>
+    <button class="tab-btn" onclick="switchTab('raw', this)">Kompletter Seiten-Abruf</button>
   </div>
 
   <div class="content">
     <div class="status-bar">
-      <span><span class="status-dot"></span><span id="update-time">Lade Stand...</span></span>
-      <span>Team-ID: 87025</span>
+      <span id="sync-status">Prüfe data.json...</span>
+      <span>Team 87025</span>
     </div>
 
-    <!-- Ansicht 1: Übersichtliche Spielkarten -->
     <div id="view-cards">
       <div id="matches-container"></div>
     </div>
 
-    <!-- Ansicht 2: Kompletter Live-Abruf aus deiner data.json (Camoufox) -->
-    <div id="view-livefeed" class="hidden">
-      <div class="raw-box" id="raw-container">
-        Lade Live-Daten aus data.json...
-      </div>
+    <div id="view-raw" class="hidden">
+      <div class="raw-box" id="raw-container"></div>
     </div>
   </div>
 
   <script>
-    // Feste Basis-Spiele der RNL U17 (Team 87025), damit die App sofort ohne Wartezeit lädt
-    const baseMatches = [
-      {
-        date: "Sa, 17.10.2026 · 16:30 Uhr",
-        status: "BEENDET",
-        home: "HC Erlangen",
-        away: "Rhein-Neckar Löwen",
-        score: "31 : 32",
-        venue: "📍 Karl-Heinz-Hiersemann-Halle, Erlangen",
-        isNext: false
-      },
-      {
-        date: "Sa, 24.10.2026 · 15:00 Uhr",
-        status: "NÄCHSTES SPIEL",
-        home: "Rhein-Neckar Löwen",
-        away: "JSG Balingen-Weilstetten",
-        score: "15:00",
-        venue: "📍 Trainingshalle, Kronau",
-        isNext: true
-      },
-      {
-        date: "Sa, 28.11.2026 · 14:30 Uhr",
-        status: "ANSTEHEND",
-        home: "Rhein-Neckar Löwen",
-        away: "SG Pforzheim/Eutingen",
-        score: "14:30",
-        venue: "📍 Trainingshalle, Kronau",
-        isNext: false
-      },
-      {
-        date: "Sa, 12.12.2026 · 15:00 Uhr",
-        status: "ANSTEHEND",
-        home: "Rhein-Neckar Löwen",
-        away: "HC Erlangen",
-        score: "15:00",
-        venue: "📍 Trainingshalle, Kronau",
-        isNext: false
-      }
-    ];
+    async function loadLiveJson() {
+      const statusEl = document.getElementById('sync-status');
+      const matchesEl = document.getElementById('matches-container');
+      const rawEl = document.getElementById('raw-container');
 
-    function renderCards(matches) {
-      const container = document.getElementById('matches-container');
-      container.innerHTML = matches.map(m => `
-        <div class="match-card ${m.isNext ? 'highlight' : ''}">
-          <div class="match-meta">
-            <span>${m.date}</span>
-            <span class="badge ${m.status === 'BEENDET' ? 'done' : (m.status === 'LIVE' ? 'live' : 'upcoming')}">${m.status}</span>
-          </div>
-          <div class="teams-row">
-            <div class="team ${m.home.includes('Löwen') ? 'rnl' : ''}">${m.home}</div>
-            <div class="score-box">${m.score}</div>
-            <div class="team away ${m.away.includes('Löwen') ? 'rnl' : ''}">${m.away}</div>
-          </div>
-          <div class="venue">${m.venue}</div>
-        </div>
-      `).join('');
-    }
+      statusEl.innerText = 'Lade data.json...';
 
-    // Versucht automatisch, neue Spielstände aus den Camoufox-Zeilen (data.json) zu erkennen
-    function updateMatchesFromRawLines(lines) {
-      if (!Array.isArray(lines) || lines.length === 0) return;
+      try {
+        // Lädt ausschließlich die von der GitHub Action erzeugte Datei
+        const response = await fetch('./data.json?nocache=' + Date.now());
+        if (!response.ok) {
+          throw new Error('data.json wurde im Repo noch nicht erstellt (HTTP ' + response.status + ')');
+        }
 
-      const fullText = lines.join(' | ');
+        const data = await response.json();
+        statusEl.innerText = 'Letzter Abruf: ' + (data.updated || 'Unbekannt');
 
-      // Beispiel-Abgleich: Falls für Balingen-Weilstetten oder Pforzheim ein Ergebnis (z.B. "28 : 25" oder "28:25") vorliegt
-      baseMatches.forEach(match => {
-        const opponent = match.home.includes('Löwen') ? match.away : match.home;
-        const idx = lines.findIndex(l => l.includes(opponent));
-        if (idx !== -1) {
-          // Prüfe die umliegenden Zeilen auf ein Spielstand-Muster wie "31 : 32" oder "31:32"
-          const windowLines = lines.slice(Math.max(0, idx - 3), Math.min(lines.length, idx + 5));
-          for (const wl of windowLines) {
-            const scoreMatch = wl.match(/^(\d{1,2})\s*:\s*(\d{1,2})$/);
-            if (scoreMatch && !wl.includes('Uhr') && parseInt(scoreMatch[1]) > 15) {
-              match.score = `${scoreMatch[1]} : ${scoreMatch[2]}`;
-              match.status = "BEENDET";
-              match.isNext = false;
+        // 1. Komplette Textzeilen im zweiten Tab rendern
+        const lines = data.raw_lines || [];
+        rawEl.innerHTML = lines.map(l => {
+          const isRnl = l.includes('Löwen');
+          const isScore = /^\d{1,2}\s*:\s*\d{1,2}$/.test(l);
+          return `<div class="raw-line ${isRnl ? 'rnl-line' : ''} ${isScore ? 'score-line' : ''}">${l}</div>`;
+        }).join('');
+
+        // 2. Dynamisch erkannte Spiele als Karten rendern
+        const matches = data.matches || [];
+        if (matches.length > 0) {
+          matchesEl.innerHTML = matches.map(m => `
+            <div class="match-card">
+              <div class="match-meta">
+                <span>${m.date || 'Spieltag'}</span>
+                <span class="badge ${m.status === 'BEENDET' ? 'done' : 'upcoming'}">${m.status}</span>
+              </div>
+              <div class="teams-row">
+                <div class="team ${m.home.includes('Löwen') ? 'rnl' : ''}">${m.home}</div>
+                <div class="score-box">${m.score}</div>
+                <div class="team away ${m.away.includes('Löwen') ? 'rnl' : ''}">${m.away}</div>
+              </div>
+            </div>
+          `).join('');
+        } else {
+          // Falls handball.net das Layout ändert, zeige direkt den gefilterten Live-Stream um "Rhein-Neckar Löwen"
+          const rnlBlocks = [];
+          lines.forEach((line, idx) => {
+            if (line.includes('Löwen')) {
+              const snippet = lines.slice(Math.max(0, idx - 3), Math.min(lines.length, idx + 4)).join(' · ');
+              rnlBlocks.push(snippet);
             }
+          });
+
+          if (rnlBlocks.length > 0) {
+            matchesEl.innerHTML = rnlBlocks.map(b => `<div class="match-card">${b}</div>`).join('');
+          } else {
+            matchesEl.innerHTML = `<div class="info-msg">Daten geladen, aber keine Spiele im Text gefunden. Schau oben rechts in den Tab "Kompletter Seiten-Abruf", um zu sehen, was handball.net geliefert hat.</div>`;
           }
         }
-      });
 
-      // Markiere das erste noch nicht beendete Spiel als "NÄCHSTES SPIEL"
-      let foundNext = false;
-      baseMatches.forEach(m => {
-        if (m.status !== "BEENDET" && !foundNext) {
-          m.status = "NÄCHSTES SPIEL";
-          m.isNext = true;
-          foundNext = true;
-        } else if (m.status !== "BEENDET") {
-          m.status = "ANSTEHEND";
-          m.isNext = false;
-        }
-      });
-    }
-
-    async function loadData() {
-      // 1. Sofort die Karten rendern (0ms Ladezeit)
-      renderCards(baseMatches);
-
-      // 2. Aktuelle data.json vom GitHub-Action-Bot abrufen
-      try {
-        const res = await fetch('./data.json?t=' + Date.now());
-        if (!res.ok) throw new Error('Noch keine data.json vorhanden');
-        const data = await res.json();
-
-        if (data.updated) {
-          document.getElementById('update-time').innerText = 'Live-Sync: ' + data.updated;
-        }
-
-        if (Array.isArray(data.raw_lines) && data.raw_lines.length > 0) {
-          // Aktualisiere Spielkarten falls neue Ergebnisse da sind
-          updateMatchesFromRawLines(data.raw_lines);
-          renderCards(baseMatches);
-
-          // Fülle zusätzlich den Direkt-Feed-Tab mit den gefilterten Live-Zeilen von handball.net
-          const rawContainer = document.getElementById('raw-container');
-          const relevantLines = data.raw_lines.filter(l => 
-            l.length > 1 && 
-            !['Cookies', 'Datenschutz', 'Impressum', 'Anmelden', 'Registrieren'].includes(l)
-          );
-
-          rawContainer.innerHTML = relevantLines.map(line => `
-            <div class="raw-line ${line.includes('Löwen') ? 'rnl-line' : ''}">${line}</div>
-          `).join('');
-        }
-      } catch (e) {
-        document.getElementById('update-time').innerText = 'Stand: Saison 26/27 (Offline-Cache)';
-        document.getElementById('raw-container').innerText = 
-          'Sobald der GitHub-Action-Job komplett grün durchgelaufen ist, siehst du hier zusätzlich den kompletten Live-Textabruf von handball.net.';
+      } catch (err) {
+        statusEl.innerText = 'Warte auf ersten GitHub-Action-Lauf';
+        matchesEl.innerHTML = `
+          <div class="info-msg">
+            <strong>Noch keine <code>data.json</code> gefunden!</strong><br><br>
+            Damit die Spiele echt und dynamisch geladen werden, muss dein GitHub-Action-Job (aus deinem Screenshot) einmal komplett grün durchlaufen.<br><br>
+            1. Aktiviere in GitHub unter <em>Settings → Actions → General → Workflow permissions</em> die Option <strong>Read and write permissions</strong>.<br>
+            2. Starte den Job in der GitHub-App erneut.
+          </div>
+        `;
       }
     }
 
     function switchTab(tab, btn) {
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-
       document.getElementById('view-cards').classList.toggle('hidden', tab !== 'cards');
-      document.getElementById('view-livefeed').classList.toggle('hidden', tab !== 'livefeed');
+      document.getElementById('view-raw').classList.toggle('hidden', tab !== 'raw');
     }
 
-    loadData();
+    loadLiveJson();
   </script>
-
 </body>
 </html>

@@ -2,10 +2,8 @@ name: U17 Daten von Handball.net abrufen
 
 on:
   schedule:
-    - cron: '*/30 * * * *' # Aktualisiert automatisch alle 30 Minuten
-  workflow_dispatch:       # Erlaubt dir jederzeit ein manuelles Update per Klick
-  push:
-    branches: [ main ]     # Lädt die Daten sofort beim ersten Speichern!
+    - cron: '*/20 * * * *' # Läuft automatisch alle 20 Minuten
+  workflow_dispatch:       # Jederzeit manuell per Klick in der GitHub App startbar
 
 jobs:
   scrape:
@@ -26,31 +24,91 @@ jobs:
           pip install camoufox[geoip] beautifulsoup4
           python -m camoufox fetch
 
-      - name: Team 87025 (RNL U17) abrufen
+      - name: Team 87025 (RNL U17) dynamisch auslesen
         run: |
           python - << 'EOF'
           import json, re
           from datetime import datetime
-          from bs4 import BeautifulSoup
+          from zoneinfo import ZoneInfo
           from camoufox.sync_api import Camoufox
 
           URL = "https://www.handball.net/team/87025?season_id=2627"
+          captured_json = []
 
           with Camoufox(headless=True) as browser:
               page = browser.new_page()
-              page.goto(URL, wait_until="networkidle", timeout=60000)
-              page.wait_for_timeout(3000)
-              text = page.inner_text("body")
 
-          # Zerlegt den sichtbaren Text der Seite sauber in die einzelnen Spiele
-          lines = [l.strip() for l in text.split('\n') if l.strip()]
-          
-          # Speichert sowohl den strukturierten Textblock als auch Zeitstempel
+              # Fängt alle echten JSON-Datenpakete ab, die handball.net im Hintergrund lädt
+              def handle_response(response):
+                  try:
+                      if "json" in response.headers.get("content-type", ""):
+                          data = response.json()
+                          captured_json.append({"url": response.url, "data": data})
+                  except Exception:
+                      pass
+
+              page.on("response", handle_response)
+              page.goto(URL, wait_until="networkidle", timeout=60000)
+              page.wait_for_timeout(4000)
+
+              # Cookie-Banner wegklicken, falls vorhanden
+              try:
+                  page.locator("button:has-text('Akzeptieren'), button:has-text('Zustimmen'), button:has-text('Alle akzeptieren')").first.click(timeout=2000)
+                  page.wait_for_timeout(1000)
+              except Exception:
+                  pass
+
+              body_text = page.inner_text("body")
+
+          lines = [l.strip() for l in body_text.split('\n') if l.strip()]
+
+          # Extrahiert dynamisch alle Spielblöcke anhand von Datums- oder Uhrzeitmustern aus der geladenen Seite
+          matches = []
+          date_pattern = re.compile(r'(Mo|Di|Mi|Do|Fr|Sa|So)?\.?,?\s*\d{2}\.\d{2}\.(\d{2,4})?')
+          score_pattern = re.compile(r'^(\d{1,2})\s*:\s*(\d{1,2})$')
+          time_pattern = re.compile(r'^(\d{2}:\d{2})\s*(Uhr)?$')
+
+          for i, line in enumerate(lines):
+              # Suche nach Spielstand (z.B. "31 : 32") oder Anwurfzeit (z.B. "15:00" / "15:00 Uhr")
+              is_score = score_pattern.match(line)
+              is_time = time_pattern.match(line)
+
+              if (is_score or is_time) and i >= 2 and i + 1 < len(lines):
+                  # Prüfe Umfeld auf Teamnamen
+                  context = lines[max(0, i-5):min(len(lines), i+6)]
+                  if any("Löwen" in c for c in context):
+                      # Suche Datum im Vorfeld
+                      match_date = ""
+                      for back in range(1, 7):
+                          if i - back >= 0 and date_pattern.search(lines[i - back]):
+                              match_date = lines[i - back]
+                              break
+
+                      home_team = lines[i - 1]
+                      away_team = lines[i + 1] if i + 1 < len(lines) else ""
+                      
+                      # Falls der Spielstand zwischen zwei Zeilen steht oder leicht versetzt ist:
+                      if home_team == ":" or len(home_team) < 3:
+                          home_team = lines[i - 2]
+
+                      status = "BEENDET" if (is_score and not is_time) else "ANSTEHEND"
+
+                      matches.append({
+                          "date": match_date,
+                          "home": home_team,
+                          "away": away_team,
+                          "score": line,
+                          "status": status,
+                          "context": context
+                      })
+
+          now_de = datetime.now(ZoneInfo("Europe/Berlin")).strftime("%d.%m.%Y, %H:%M Uhr")
+
           output = {
-              "team": "Rhein-Neckar Löwen U17 (mB)",
-              "liga": "Jugendbundesliga B-Jugend - Vorrunde 7",
-              "updated": datetime.now().strftime("%d.%m.%Y, %H:%M Uhr"),
-              "raw_lines": lines
+              "updated": now_de,
+              "matches": matches,
+              "raw_lines": lines,
+              "api_dumps": captured_json[:10]
           }
 
           with open("data.json", "w", encoding="utf-8") as f:
@@ -62,5 +120,4 @@ jobs:
           git config user.name "RNL-Live-Bot"
           git config user.email "bot@github.com"
           git add data.json
-          git diff --staged --quiet || git commit -m "Update RNL U17 Spielstände"
-          git push
+          git diff --staged --quiet || (git commit -m "Update RNL U17 Live-Daten" && git pull --rebase && git push)

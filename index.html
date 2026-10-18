@@ -13,6 +13,7 @@
       box-sizing: border-box;
       margin: 0;
       padding: 0;
+      -webkit-tap-highlight-color: transparent;
     }
 
     body, html {
@@ -29,12 +30,18 @@
     .app-header {
       background-color: #161b22;
       padding-top: max(env(safe-area-inset-top), 20px);
-      padding-bottom: 12px;
+      padding-bottom: 10px;
+      padding-left: 16px;
+      padding-right: 16px;
       display: flex;
-      justify-content: center;
-      align-items: flex-end;
+      justify-content: space-between;
+      align-items: center;
       border-bottom: 1px solid #30363d;
       z-index: 10;
+    }
+
+    .header-spacer {
+      width: 32px; /* Ausgleich für Zentrierung */
     }
 
     .app-title {
@@ -42,24 +49,138 @@
       font-weight: 700;
       font-size: 1.1rem;
       letter-spacing: 0.5px;
+      text-align: center;
     }
 
-    /* Lädt die originale Webseite nahtlos in den unteren Bereich */
-    iframe {
+    .refresh-btn {
+      background: none;
+      border: none;
+      color: #facc15;
+      font-size: 1.25rem;
+      width: 32px;
+      height: 32px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* iOS-Style Segmented Control für Spielplan & Tabelle */
+    .tab-bar {
+      background-color: #161b22;
+      padding: 8px 16px 12px;
+      display: flex;
+      gap: 8px;
+      border-bottom: 1px solid #30363d;
+    }
+
+    .tab-btn {
+      flex: 1;
+      background-color: #21262d;
+      color: #8b949e;
+      border: 1px solid #30363d;
+      padding: 8px 0;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .tab-btn.active {
+      background-color: #facc15;
+      color: #0d1117;
+      border-color: #facc15;
+    }
+
+    /* Scrollbarer Inhaltsbereich für das Handball.net Widget */
+    .content-area {
       flex-grow: 1;
       width: 100%;
-      border: none;
-      background-color: #ffffff; /* Hintergrund von Handball.net */
+      background-color: #ffffff;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: 12px 8px calc(env(safe-area-inset-bottom) + 20px);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* Falls das direkte Widget-Format auf deiner Domain noch nicht freigeschaltet ist: Fallback-Hinweis */
+    .loading-hint {
+      text-align: center;
+      color: #6e7681;
+      padding: 40px 20px;
+      font-size: 0.9rem;
     }
   </style>
+
+  <!-- Offizielles Handball.net Widget-Script (umgeht die iframe-Sperre legal) -->
+  <script>
+    (function(e,t,n,r,i,s,o){e[i]=e[i]||function(){(e[i].q=e[i].q||[]).push(arguments)},
+    e[i].l=1*new Date;s=t.createElement(n),o=t.getElementsByTagName(n)[0];s.async=1;
+    s.src=r;o.parentNode.insertBefore(s,o)})(window,document,"script",
+    "https://www.handball.net/widgets/embed/v1.js","_hb");
+  </script>
 </head>
 <body>
 
   <div class="app-header">
+    <div class="header-spacer"></div>
     <div class="app-title">Rhein-Neckar Löwen</div>
+    <button class="refresh-btn" onclick="location.reload()" title="Aktualisieren">↻</button>
   </div>
 
-  <iframe src="https://www.handball.net/team/87025?season_id=2627" sandbox="allow-scripts allow-same-origin allow-forms"></iframe>
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('schedule', this)">Spielplan & Live</button>
+    <button class="tab-btn" onclick="switchTab('table', this)">Tabelle</button>
+  </div>
+
+  <div class="content-area">
+    <!-- Ansicht 1: Spielplan & Ergebnisse -->
+    <div id="view-schedule">
+      <div id="hb-widget-schedule">
+        <div class="loading-hint">Lade aktuelle Spiele der Rhein-Neckar Löwen...</div>
+      </div>
+    </div>
+
+    <!-- Ansicht 2: Aktuelle Tabelle -->
+    <div id="view-table" class="hidden">
+      <div id="hb-widget-table">
+        <div class="loading-hint">Lade aktuelle Tabelle...</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Deine Team-ID aus deiner bisherigen URL (87025)
+    const TEAM_ID = '87025';
+
+    window.addEventListener('DOMContentLoaded', () => {
+      // Lädt den Spielplan inkl. Live-Ergebnissen
+      _hb({
+        widget: 'spielplan',
+        teamId: TEAM_ID,
+        container: 'hb-widget-schedule'
+      });
+
+      // Lädt die zugehörige Liga-Tabelle
+      _hb({
+        widget: 'tabelle',
+        teamId: TEAM_ID,
+        container: 'hb-widget-table'
+      });
+    });
+
+    function switchTab(view, btn) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      document.getElementById('view-schedule').classList.toggle('hidden', view !== 'schedule');
+      document.getElementById('view-table').classList.toggle('hidden', view !== 'table');
+    }
+  </script>
 
 </body>
 </html>

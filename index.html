@@ -9,7 +9,12 @@
   <title>RNL U17 Live</title>
   
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
 
     body, html {
       height: 100vh;
@@ -22,6 +27,7 @@
       font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
     }
 
+    /* Native iOS-App-Leiste im Dark Mode */
     .app-header {
       background-color: #161b22;
       padding: max(env(safe-area-inset-top), 18px) 16px 12px;
@@ -29,11 +35,26 @@
       justify-content: space-between;
       align-items: center;
       border-bottom: 1px solid #30363d;
+      z-index: 10;
     }
 
-    .title-group { text-align: center; flex: 1; }
-    .app-title { color: #facc15; font-weight: 700; font-size: 1.1rem; }
-    .app-subtitle { color: #8b949e; font-size: 0.75rem; margin-top: 2px; }
+    .title-group {
+      text-align: center;
+      flex: 1;
+    }
+
+    .app-title {
+      color: #facc15;
+      font-weight: 700;
+      font-size: 1.1rem;
+      letter-spacing: 0.3px;
+    }
+
+    .app-subtitle {
+      color: #8b949e;
+      font-size: 0.75rem;
+      margin-top: 2px;
+    }
 
     .icon-btn {
       background: #21262d;
@@ -48,8 +69,41 @@
       justify-content: center;
       cursor: pointer;
       text-decoration: none;
+      transition: transform 0.15s ease;
     }
 
+    .icon-btn:active {
+      transform: scale(0.92);
+    }
+
+    /* Tab-Leiste */
+    .tab-bar {
+      background-color: #161b22;
+      padding: 8px 14px 12px;
+      display: flex;
+      gap: 8px;
+      border-bottom: 1px solid #30363d;
+    }
+
+    .tab-btn {
+      flex: 1;
+      background-color: #21262d;
+      color: #8b949e;
+      border: 1px solid #30363d;
+      padding: 8px 0;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .tab-btn.active {
+      background-color: #facc15;
+      color: #0d1117;
+      border-color: #facc15;
+    }
+
+    /* Scrollbarer Hauptbereich */
     .content {
       flex: 1;
       overflow-y: auto;
@@ -67,6 +121,16 @@
       padding: 0 4px;
     }
 
+    .status-dot {
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background-color: #3fb950;
+      margin-right: 5px;
+    }
+
+    /* Spielkarten */
     .match-card {
       background-color: #161b22;
       border: 1px solid #30363d;
@@ -77,40 +141,45 @@
 
     .match-card.highlight {
       border-color: #facc15;
-      box-shadow: 0 0 12px rgba(250, 204, 21, 0.12);
+      box-shadow: 0 0 14px rgba(250, 204, 21, 0.14);
     }
 
     .match-meta {
       display: flex;
       justify-content: space-between;
+      align-items: center;
       font-size: 0.75rem;
       color: #8b949e;
       margin-bottom: 10px;
     }
 
     .badge {
-      padding: 2px 8px;
+      padding: 3px 8px;
       border-radius: 6px;
-      font-weight: 600;
-      font-size: 0.7rem;
+      font-weight: 700;
+      font-size: 0.68rem;
+      letter-spacing: 0.3px;
     }
-    .badge.done { background: #23863633; color: #3fb950; }
-    .badge.upcoming { background: #facc1522; color: #facc15; }
+
+    .badge.done { background: rgba(63, 185, 80, 0.18); color: #3fb950; }
+    .badge.upcoming { background: rgba(250, 204, 21, 0.18); color: #facc15; }
+    .badge.live { background: rgba(248, 81, 73, 0.2); color: #f85149; }
 
     .teams-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
     }
 
     .team {
       flex: 1;
       font-size: 0.92rem;
       font-weight: 600;
-      line-height: 1.25;
+      line-height: 1.3;
     }
-    .team.rnl { color: #facc15; }
+
+    .team.rnl { color: #facc15; font-weight: 700; }
     .team.away { text-align: right; }
 
     .score-box {
@@ -119,9 +188,10 @@
       border-radius: 8px;
       font-weight: 800;
       font-size: 1.05rem;
-      min-width: 68px;
+      min-width: 72px;
       text-align: center;
       border: 1px solid #30363d;
+      white-space: nowrap;
     }
 
     .venue {
@@ -131,31 +201,75 @@
       font-size: 0.75rem;
       color: #8b949e;
     }
+
+    /* Live-Rohdaten-Ansicht aus Camoufox (data.json) */
+    .raw-box {
+      background-color: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 14px;
+      font-size: 0.85rem;
+      line-height: 1.55;
+      color: #c9d1d9;
+    }
+
+    .raw-line {
+      padding: 6px 0;
+      border-bottom: 1px solid #21262d;
+    }
+
+    .raw-line:last-child {
+      border-bottom: none;
+    }
+
+    .raw-line.rnl-line {
+      color: #facc15;
+      font-weight: 600;
+    }
+
+    .hidden {
+      display: none !important;
+    }
   </style>
 </head>
 <body>
 
   <div class="app-header">
-    <a href="https://www.handball.net/team/87025?season_id=2627" target="_blank" class="icon-btn" title="Original öffnen">↗</a>
+    <a href="https://www.handball.net/team/87025?season_id=2627" target="_blank" class="icon-btn" title="Auf Handball.net öffnen">↗</a>
     <div class="title-group">
-      <div class="app-title">Rhein-Neckar Löwen U17</div>
-      <div class="app-subtitle">JBLH mB · Vorrunde 7</div>
+      <div class="app-title" id="header-title">Rhein-Neckar Löwen U17</div>
+      <div class="app-subtitle" id="header-sub">JBLH mB · Vorrunde 7</div>
     </div>
-    <button class="icon-btn" onclick="loadData(true)" title="Neu laden">↻</button>
+    <button class="icon-btn" onclick="loadData()" title="Aktualisieren">↻</button>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('cards', this)">Spielplan & Scores</button>
+    <button class="tab-btn" onclick="switchTab('livefeed', this)">Handball.net Direkt-Feed</button>
   </div>
 
   <div class="content">
     <div class="status-bar">
-      <span id="update-time">Stand: Aktuelle Saison 26/27</span>
+      <span><span class="status-dot"></span><span id="update-time">Lade Stand...</span></span>
       <span>Team-ID: 87025</span>
     </div>
 
-    <div id="matches-container"></div>
+    <!-- Ansicht 1: Übersichtliche Spielkarten -->
+    <div id="view-cards">
+      <div id="matches-container"></div>
+    </div>
+
+    <!-- Ansicht 2: Kompletter Live-Abruf aus deiner data.json (Camoufox) -->
+    <div id="view-livefeed" class="hidden">
+      <div class="raw-box" id="raw-container">
+        Lade Live-Daten aus data.json...
+      </div>
+    </div>
   </div>
 
   <script>
-    // Aktuelle Spiele der RNL U17 (Team 87025 - JBLH B-Jugend Vorrunde 7)
-    const fallbackMatches = [
+    // Feste Basis-Spiele der RNL U17 (Team 87025), damit die App sofort ohne Wartezeit lädt
+    const baseMatches = [
       {
         date: "Sa, 17.10.2026 · 16:30 Uhr",
         status: "BEENDET",
@@ -194,13 +308,13 @@
       }
     ];
 
-    function renderMatches(matches) {
+    function renderCards(matches) {
       const container = document.getElementById('matches-container');
       container.innerHTML = matches.map(m => `
         <div class="match-card ${m.isNext ? 'highlight' : ''}">
           <div class="match-meta">
             <span>${m.date}</span>
-            <span class="badge ${m.status === 'BEENDET' ? 'done' : 'upcoming'}">${m.status}</span>
+            <span class="badge ${m.status === 'BEENDET' ? 'done' : (m.status === 'LIVE' ? 'live' : 'upcoming')}">${m.status}</span>
           </div>
           <div class="teams-row">
             <div class="team ${m.home.includes('Löwen') ? 'rnl' : ''}">${m.home}</div>
@@ -212,24 +326,91 @@
       `).join('');
     }
 
-    async function loadData(manual = false) {
-      // Zeige sofort die gespeicherten Spiele (kein Hängenbleiben im Ladescreen!)
-      renderMatches(fallbackMatches);
+    // Versucht automatisch, neue Spielstände aus den Camoufox-Zeilen (data.json) zu erkennen
+    function updateMatchesFromRawLines(lines) {
+      if (!Array.isArray(lines) || lines.length === 0) return;
 
-      try {
-        const res = await fetch('./data.json?t=' + Date.now());
-        if (res.ok) {
-          const data = await res.json();
-          if (data.updated) {
-            document.getElementById('update-time').innerText = 'Auto-Sync: ' + data.updated;
+      const fullText = lines.join(' | ');
+
+      // Beispiel-Abgleich: Falls für Balingen-Weilstetten oder Pforzheim ein Ergebnis (z.B. "28 : 25" oder "28:25") vorliegt
+      baseMatches.forEach(match => {
+        const opponent = match.home.includes('Löwen') ? match.away : match.home;
+        const idx = lines.findIndex(l => l.includes(opponent));
+        if (idx !== -1) {
+          // Prüfe die umliegenden Zeilen auf ein Spielstand-Muster wie "31 : 32" oder "31:32"
+          const windowLines = lines.slice(Math.max(0, idx - 3), Math.min(lines.length, idx + 5));
+          for (const wl of windowLines) {
+            const scoreMatch = wl.match(/^(\d{1,2})\s*:\s*(\d{1,2})$/);
+            if (scoreMatch && !wl.includes('Uhr') && parseInt(scoreMatch[1]) > 15) {
+              match.score = `${scoreMatch[1]} : ${scoreMatch[2]}`;
+              match.status = "BEENDET";
+              match.isNext = false;
+            }
           }
         }
+      });
+
+      // Markiere das erste noch nicht beendete Spiel als "NÄCHSTES SPIEL"
+      let foundNext = false;
+      baseMatches.forEach(m => {
+        if (m.status !== "BEENDET" && !foundNext) {
+          m.status = "NÄCHSTES SPIEL";
+          m.isNext = true;
+          foundNext = true;
+        } else if (m.status !== "BEENDET") {
+          m.status = "ANSTEHEND";
+          m.isNext = false;
+        }
+      });
+    }
+
+    async function loadData() {
+      // 1. Sofort die Karten rendern (0ms Ladezeit)
+      renderCards(baseMatches);
+
+      // 2. Aktuelle data.json vom GitHub-Action-Bot abrufen
+      try {
+        const res = await fetch('./data.json?t=' + Date.now());
+        if (!res.ok) throw new Error('Noch keine data.json vorhanden');
+        const data = await res.json();
+
+        if (data.updated) {
+          document.getElementById('update-time').innerText = 'Live-Sync: ' + data.updated;
+        }
+
+        if (Array.isArray(data.raw_lines) && data.raw_lines.length > 0) {
+          // Aktualisiere Spielkarten falls neue Ergebnisse da sind
+          updateMatchesFromRawLines(data.raw_lines);
+          renderCards(baseMatches);
+
+          // Fülle zusätzlich den Direkt-Feed-Tab mit den gefilterten Live-Zeilen von handball.net
+          const rawContainer = document.getElementById('raw-container');
+          const relevantLines = data.raw_lines.filter(l => 
+            l.length > 1 && 
+            !['Cookies', 'Datenschutz', 'Impressum', 'Anmelden', 'Registrieren'].includes(l)
+          );
+
+          rawContainer.innerHTML = relevantLines.map(line => `
+            <div class="raw-line ${line.includes('Löwen') ? 'rnl-line' : ''}">${line}</div>
+          `).join('');
+        }
       } catch (e) {
-        // Nutzt nahtlos die integrierten Daten, falls data.json noch erstellt wird
+        document.getElementById('update-time').innerText = 'Stand: Saison 26/27 (Offline-Cache)';
+        document.getElementById('raw-container').innerText = 
+          'Sobald der GitHub-Action-Job komplett grün durchgelaufen ist, siehst du hier zusätzlich den kompletten Live-Textabruf von handball.net.';
       }
+    }
+
+    function switchTab(tab, btn) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      document.getElementById('view-cards').classList.toggle('hidden', tab !== 'cards');
+      document.getElementById('view-livefeed').classList.toggle('hidden', tab !== 'livefeed');
     }
 
     loadData();
   </script>
+
 </body>
 </html>

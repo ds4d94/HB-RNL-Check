@@ -1,301 +1,66 @@
-<!DOCTYPE html>
-<html lang="de">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="RNL U17">
-  <title>RNL U17 Live</title>
-  
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+name: U17 Daten von Handball.net abrufen
 
-    body, html {
-      height: 100vh;
-      width: 100vw;
-      background-color: #0d1117;
-      color: #f0f6fc;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-    }
+on:
+  schedule:
+    - cron: '*/30 * * * *' # Aktualisiert automatisch alle 30 Minuten
+  workflow_dispatch:       # Erlaubt dir jederzeit ein manuelles Update per Klick
+  push:
+    branches: [ main ]     # Lädt die Daten sofort beim ersten Speichern!
 
-    .app-header {
-      background-color: #161b22;
-      padding: max(env(safe-area-inset-top), 18px) 16px 12px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid #30363d;
-    }
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Repo auschecken
+        uses: actions/checkout@v4
 
-    .title-group { text-align: center; flex: 1; }
-    .app-title { color: #facc15; font-weight: 700; font-size: 1.1rem; }
-    .app-subtitle { color: #8b949e; font-size: 0.75rem; margin-top: 2px; }
+      - name: Python & Camoufox installieren
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
 
-    .icon-btn {
-      background: #21262d;
-      border: 1px solid #30363d;
-      color: #facc15;
-      border-radius: 8px;
-      width: 36px;
-      height: 36px;
-      font-size: 1.1rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      text-decoration: none;
-    }
+      - name: Abhängigkeiten laden
+        run: |
+          pip install camoufox[geoip] beautifulsoup4
+          python -m camoufox fetch
 
-    .content {
-      flex: 1;
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
-      padding: 14px 14px calc(env(safe-area-inset-bottom) + 24px);
-    }
+      - name: Team 87025 (RNL U17) abrufen
+        run: |
+          python - << 'EOF'
+          import json, re
+          from datetime import datetime
+          from bs4 import BeautifulSoup
+          from camoufox.sync_api import Camoufox
 
-    .status-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 0.75rem;
-      color: #8b949e;
-      margin-bottom: 12px;
-      padding: 0 4px;
-    }
+          URL = "https://www.handball.net/team/87025?season_id=2627"
 
-    .status-dot {
-      display: inline-block;
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background-color: #3fb950;
-      margin-right: 6px;
-    }
+          with Camoufox(headless=True) as browser:
+              page = browser.new_page()
+              page.goto(URL, wait_until="networkidle", timeout=60000)
+              page.wait_for_timeout(3000)
+              text = page.inner_text("body")
 
-    .match-card {
-      background-color: #161b22;
-      border: 1px solid #30363d;
-      border-radius: 12px;
-      padding: 14px;
-      margin-bottom: 12px;
-    }
-
-    .match-card.highlight {
-      border-color: #facc15;
-      box-shadow: 0 0 14px rgba(250, 204, 21, 0.15);
-    }
-
-    .match-meta {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 0.75rem;
-      color: #8b949e;
-      margin-bottom: 12px;
-    }
-
-    .badge {
-      padding: 3px 8px;
-      border-radius: 6px;
-      font-weight: 700;
-      font-size: 0.68rem;
-      letter-spacing: 0.3px;
-    }
-    .badge.done { background: rgba(63, 185, 80, 0.18); color: #3fb950; }
-    .badge.next { background: #facc15; color: #0d1117; }
-    .badge.upcoming { background: rgba(250, 204, 21, 0.15); color: #facc15; }
-    .badge.live { background: rgba(248, 81, 73, 0.25); color: #f85149; }
-
-    .teams-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .team {
-      flex: 1;
-      font-size: 0.9rem;
-      font-weight: 600;
-      line-height: 1.3;
-    }
-    .team.rnl { color: #facc15; font-weight: 700; }
-    .team.away { text-align: right; }
-
-    .score-box {
-      background: #21262d;
-      padding: 6px 12px;
-      border-radius: 8px;
-      font-weight: 800;
-      font-size: 0.98rem;
-      min-width: 74px;
-      text-align: center;
-      border: 1px solid #30363d;
-      white-space: nowrap;
-    }
-
-    .venue {
-      margin-top: 10px;
-      padding-top: 8px;
-      border-top: 1px solid #21262d;
-      display: flex;
-      justify-content: space-between;
-      font-size: 0.73rem;
-      color: #8b949e;
-    }
-  </style>
-</head>
-<body>
-
-  <div class="app-header">
-    <a href="https://www.handball.net/team/87025?season_id=2627" target="_blank" class="icon-btn" title="Auf Handball.net öffnen">↗</a>
-    <div class="title-group">
-      <div class="app-title" id="team-title">Rhein-Neckar Löwen U17</div>
-      <div class="app-subtitle" id="liga-title">JBLH mB · Vorrunde 7</div>
-    </div>
-    <button class="icon-btn" onclick="loadLiveJson()" title="Aktualisieren">↻</button>
-  </div>
-
-  <div class="content">
-    <div class="status-bar">
-      <span><span class="status-dot"></span><span id="sync-status">Lade Live-Daten...</span></span>
-      <span>Team 87025</span>
-    </div>
-
-    <div id="matches-container"></div>
-  </div>
-
-  <script>
-    // Formatiert "RHEIN-NECKAR LÖWEN" oder "TRAININGSHALLE (TRAININGSHALLE)" schöner
-    function cleanVenue(rawVenue) {
-      if (!rawVenue) return '';
-      // Entfernt doppelte Klammerwerte wie "TRAININGSHALLE (TRAININGSHALLE)"
-      return rawVenue.replace(/\s*\([^)]+\)$/, '');
-    }
-
-    // Liest alle Spielblöcke zu 100% dynamisch aus den raw_lines deiner data.json aus
-    function parseMatchesFromLines(lines) {
-      const matches = [];
-      let nextMarked = false;
-
-      for (let i = 0; i < lines.length; i++) {
-        // Jedes Spiel auf handball.net hat den festen Ankerpunkt "Spielbeginn"
-        if (lines[i] === "Spielbeginn" && i >= 4) {
-          const fullDate = lines[i + 1] || "";
-          const awayTeam = lines[i - 1] || "";
+          # Zerlegt den sichtbaren Text der Seite sauber in die einzelnen Spiele
+          lines = [l.strip() for l in text.split('\n') if l.strip()]
           
-          let centerBox = "";
-          let homeTeam = "";
-          let rawStatus = "";
-
-          // Fall A: Vor dem Auswärtsteam steht "UHR" (z.B. ["RHEIN-NECKAR LÖWEN", "15:00", "UHR", "JSG BALINGEN-WEILSTETTEN"])
-          if (lines[i - 2] === "UHR") {
-            centerBox = lines[i - 3] + " Uhr";
-            homeTeam = lines[i - 4] || "";
-            rawStatus = lines[i - 6] || "ANSTEHEND";
-          } 
-          // Fall B: Live-Spiel oder Ergebnis steht zwischen den Teams (z.B. ["TEAM A", "28 : 26", "TEAM B"] oder ["TEAM A", "28", ":", "26", "TEAM B"])
-          else if (lines[i - 3] === ":") {
-            centerBox = `${lines[i - 4]} : ${lines[i - 2]}`;
-            homeTeam = lines[i - 5] || "";
-            rawStatus = lines[i - 7] || "LIVE / ENDE";
-          } 
-          else {
-            centerBox = lines[i - 2] || "vs.";
-            homeTeam = lines[i - 3] || "";
-            rawStatus = lines[i - 5] || "SPIEL";
+          # Speichert sowohl den strukturierten Textblock als auch Zeitstempel
+          output = {
+              "team": "Rhein-Neckar Löwen U17 (mB)",
+              "liga": "Jugendbundesliga B-Jugend - Vorrunde 7",
+              "updated": datetime.now().strftime("%d.%m.%Y, %H:%M Uhr"),
+              "raw_lines": lines
           }
 
-          // Halle und Spielnummer nach "Spielbeginn" suchen
-          let venue = "";
-          let matchId = "";
-          for (let j = i + 1; j < Math.min(lines.length, i + 14); j++) {
-            if (lines[j] === "Halle" && lines[j + 1]) {
-              venue = cleanVenue(lines[j + 1]);
-            }
-            if (lines[j] === "Spielnummer" && lines[j + 1]) {
-              matchId = lines[j + 1];
-            }
-          }
+          with open("data.json", "w", encoding="utf-8") as f:
+              json.dump(output, f, ensure_ascii=False, indent=2)
+          EOF
 
-          let isNext = false;
-          let badgeClass = "upcoming";
-          let badgeText = rawStatus;
-
-          if (rawStatus.includes("ANSTEHEND") && !nextMarked) {
-            isNext = true;
-            nextMarked = true;
-            badgeClass = "next";
-            badgeText = "NÄCHSTES SPIEL";
-          } else if (rawStatus.includes("LIVE")) {
-            badgeClass = "live";
-          } else if (rawStatus.includes("BEENDET") || rawStatus.includes("ENDE")) {
-            badgeClass = "done";
-          }
-
-          matches.push({
-            date: fullDate,
-            home: homeTeam,
-            away: awayTeam,
-            score: centerBox,
-            venue: venue,
-            matchId: matchId,
-            isNext: isNext,
-            badgeClass: badgeClass,
-            badgeText: badgeText
-          });
-        }
-      }
-      return matches;
-    }
-
-    async function loadLiveJson() {
-      const statusEl = document.getElementById('sync-status');
-      const container = document.getElementById('matches-container');
-
-      try {
-        const res = await fetch('./data.json?nocache=' + Date.now());
-        const data = await res.json();
-
-        if (data.team) document.getElementById('team-title').innerText = data.team;
-        if (data.liga) document.getElementById('liga-title').innerText = data.liga;
-        statusEl.innerText = 'Live-Sync: ' + (data.updated || 'Aktiv');
-
-        const matches = parseMatchesFromLines(data.raw_lines || []);
-
-        container.innerHTML = matches.map(m => {
-          const homeIsRnl = m.home.toUpperCase().includes('LÖWEN');
-          const awayIsRnl = m.away.toUpperCase().includes('LÖWEN');
-
-          return `
-            <div class="match-card ${m.isNext ? 'highlight' : ''}">
-              <div class="match-meta">
-                <span>${m.date}</span>
-                <span class="badge ${m.badgeClass}">${m.badgeText}</span>
-              </div>
-              <div class="teams-row">
-                <div class="team ${homeIsRnl ? 'rnl' : ''}">${m.home}</div>
-                <div class="score-box">${m.score}</div>
-                <div class="team away ${awayIsRnl ? 'rnl' : ''}">${m.away}</div>
-              </div>
-              <div class="venue">
-                <span>📍 ${m.venue || 'Halle folgt'}</span>
-                <span>#${m.matchId}</span>
-              </div>
-            </div>
-          `;
-        }).join('');
-
-      } catch (err) {
-        statusEl.innerText = 'Fehler beim Laden der data.json';
-      }
-    }
-
-    loadLiveJson();
-  </script>
-</body>
-</html>
+      - name: data.json im Repository speichern
+        run: |
+          git config user.name "RNL-Live-Bot"
+          git config user.email "bot@github.com"
+          git add data.json
+          git diff --staged --quiet || git commit -m "Update RNL U17 Spielstände"
+          git push

@@ -1,0 +1,66 @@
+name: U17 Daten von Handball.net abrufen
+
+on:
+  schedule:
+    - cron: '*/30 * * * *' # Aktualisiert automatisch alle 30 Minuten
+  workflow_dispatch:       # Erlaubt dir jederzeit ein manuelles Update per Klick
+  push:
+    branches: [ main ]     # Lädt die Daten sofort beim ersten Speichern!
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Repo auschecken
+        uses: actions/checkout@v4
+
+      - name: Python & Camoufox installieren
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Abhängigkeiten laden
+        run: |
+          pip install camoufox[geoip] beautifulsoup4
+          python -m camoufox fetch
+
+      - name: Team 87025 (RNL U17) abrufen
+        run: |
+          python - << 'EOF'
+          import json, re
+          from datetime import datetime
+          from bs4 import BeautifulSoup
+          from camoufox.sync_api import Camoufox
+
+          URL = "https://www.handball.net/team/87025?season_id=2627"
+
+          with Camoufox(headless=True) as browser:
+              page = browser.new_page()
+              page.goto(URL, wait_until="networkidle", timeout=60000)
+              page.wait_for_timeout(3000)
+              text = page.inner_text("body")
+
+          # Zerlegt den sichtbaren Text der Seite sauber in die einzelnen Spiele
+          lines = [l.strip() for l in text.split('\n') if l.strip()]
+          
+          # Speichert sowohl den strukturierten Textblock als auch Zeitstempel
+          output = {
+              "team": "Rhein-Neckar Löwen U17 (mB)",
+              "liga": "Jugendbundesliga B-Jugend - Vorrunde 7",
+              "updated": datetime.now().strftime("%d.%m.%Y, %H:%M Uhr"),
+              "raw_lines": lines
+          }
+
+          with open("data.json", "w", encoding="utf-8") as f:
+              json.dump(output, f, ensure_ascii=False, indent=2)
+          EOF
+
+      - name: data.json im Repository speichern
+        run: |
+          git config user.name "RNL-Live-Bot"
+          git config user.email "bot@github.com"
+          git add data.json
+          git diff --staged --quiet || git commit -m "Update RNL U17 Spielstände"
+          git push

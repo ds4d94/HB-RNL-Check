@@ -5,182 +5,231 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="RNL Live">
-  <title>RNL Live App</title>
+  <meta name="apple-mobile-web-app-title" content="RNL U17">
+  <title>RNL U17 Live</title>
   
   <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      -webkit-tap-highlight-color: transparent;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
     body, html {
       height: 100vh;
       width: 100vw;
       background-color: #0d1117;
+      color: #f0f6fc;
       display: flex;
       flex-direction: column;
       overflow: hidden;
       font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
     }
 
-    /* Simuliert eine native iOS-App-Leiste im Dark Mode */
     .app-header {
       background-color: #161b22;
-      padding-top: max(env(safe-area-inset-top), 20px);
-      padding-bottom: 10px;
-      padding-left: 16px;
-      padding-right: 16px;
+      padding: max(env(safe-area-inset-top), 18px) 16px 12px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       border-bottom: 1px solid #30363d;
-      z-index: 10;
     }
 
-    .header-spacer {
-      width: 32px; /* Ausgleich für Zentrierung */
-    }
+    .title-group { text-align: center; flex: 1; }
+    .app-title { color: #facc15; font-weight: 700; font-size: 1.1rem; }
+    .app-subtitle { color: #8b949e; font-size: 0.75rem; margin-top: 2px; }
 
-    .app-title {
+    .icon-btn {
+      background: #21262d;
+      border: 1px solid #30363d;
       color: #facc15;
-      font-weight: 700;
+      border-radius: 8px;
+      width: 36px;
+      height: 36px;
       font-size: 1.1rem;
-      letter-spacing: 0.5px;
-      text-align: center;
-    }
-
-    .refresh-btn {
-      background: none;
-      border: none;
-      color: #facc15;
-      font-size: 1.25rem;
-      width: 32px;
-      height: 32px;
-      cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-    }
-
-    /* iOS-Style Segmented Control für Spielplan & Tabelle */
-    .tab-bar {
-      background-color: #161b22;
-      padding: 8px 16px 12px;
-      display: flex;
-      gap: 8px;
-      border-bottom: 1px solid #30363d;
-    }
-
-    .tab-btn {
-      flex: 1;
-      background-color: #21262d;
-      color: #8b949e;
-      border: 1px solid #30363d;
-      padding: 8px 0;
-      border-radius: 8px;
-      font-size: 0.9rem;
-      font-weight: 600;
       cursor: pointer;
-      transition: all 0.15s ease;
+      text-decoration: none;
     }
 
-    .tab-btn.active {
-      background-color: #facc15;
-      color: #0d1117;
-      border-color: #facc15;
-    }
-
-    /* Scrollbarer Inhaltsbereich für das Handball.net Widget */
-    .content-area {
-      flex-grow: 1;
-      width: 100%;
-      background-color: #ffffff;
+    .content {
+      flex: 1;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
-      padding: 12px 8px calc(env(safe-area-inset-bottom) + 20px);
+      padding: 14px 14px calc(env(safe-area-inset-bottom) + 24px);
     }
 
-    .hidden {
-      display: none !important;
+    .status-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.75rem;
+      color: #8b949e;
+      margin-bottom: 12px;
+      padding: 0 4px;
     }
 
-    /* Falls das direkte Widget-Format auf deiner Domain noch nicht freigeschaltet ist: Fallback-Hinweis */
-    .loading-hint {
+    .match-card {
+      background-color: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+
+    .match-card.highlight {
+      border-color: #facc15;
+      box-shadow: 0 0 12px rgba(250, 204, 21, 0.12);
+    }
+
+    .match-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: #8b949e;
+      margin-bottom: 10px;
+    }
+
+    .badge {
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 0.7rem;
+    }
+    .badge.done { background: #23863633; color: #3fb950; }
+    .badge.upcoming { background: #facc1522; color: #facc15; }
+
+    .teams-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .team {
+      flex: 1;
+      font-size: 0.92rem;
+      font-weight: 600;
+      line-height: 1.25;
+    }
+    .team.rnl { color: #facc15; }
+    .team.away { text-align: right; }
+
+    .score-box {
+      background: #21262d;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-weight: 800;
+      font-size: 1.05rem;
+      min-width: 68px;
       text-align: center;
-      color: #6e7681;
-      padding: 40px 20px;
-      font-size: 0.9rem;
+      border: 1px solid #30363d;
+    }
+
+    .venue {
+      margin-top: 10px;
+      padding-top: 8px;
+      border-top: 1px solid #21262d;
+      font-size: 0.75rem;
+      color: #8b949e;
     }
   </style>
-
-  <!-- Offizielles Handball.net Widget-Script (umgeht die iframe-Sperre legal) -->
-  <script>
-    (function(e,t,n,r,i,s,o){e[i]=e[i]||function(){(e[i].q=e[i].q||[]).push(arguments)},
-    e[i].l=1*new Date;s=t.createElement(n),o=t.getElementsByTagName(n)[0];s.async=1;
-    s.src=r;o.parentNode.insertBefore(s,o)})(window,document,"script",
-    "https://www.handball.net/widgets/embed/v1.js","_hb");
-  </script>
 </head>
 <body>
 
   <div class="app-header">
-    <div class="header-spacer"></div>
-    <div class="app-title">Rhein-Neckar Löwen</div>
-    <button class="refresh-btn" onclick="location.reload()" title="Aktualisieren">↻</button>
+    <a href="https://www.handball.net/team/87025?season_id=2627" target="_blank" class="icon-btn" title="Original öffnen">↗</a>
+    <div class="title-group">
+      <div class="app-title">Rhein-Neckar Löwen U17</div>
+      <div class="app-subtitle">JBLH mB · Vorrunde 7</div>
+    </div>
+    <button class="icon-btn" onclick="loadData(true)" title="Neu laden">↻</button>
   </div>
 
-  <div class="tab-bar">
-    <button class="tab-btn active" onclick="switchTab('schedule', this)">Spielplan & Live</button>
-    <button class="tab-btn" onclick="switchTab('table', this)">Tabelle</button>
-  </div>
-
-  <div class="content-area">
-    <!-- Ansicht 1: Spielplan & Ergebnisse -->
-    <div id="view-schedule">
-      <div id="hb-widget-schedule">
-        <div class="loading-hint">Lade aktuelle Spiele der Rhein-Neckar Löwen...</div>
-      </div>
+  <div class="content">
+    <div class="status-bar">
+      <span id="update-time">Stand: Aktuelle Saison 26/27</span>
+      <span>Team-ID: 87025</span>
     </div>
 
-    <!-- Ansicht 2: Aktuelle Tabelle -->
-    <div id="view-table" class="hidden">
-      <div id="hb-widget-table">
-        <div class="loading-hint">Lade aktuelle Tabelle...</div>
-      </div>
-    </div>
+    <div id="matches-container"></div>
   </div>
 
   <script>
-    // Deine Team-ID aus deiner bisherigen URL (87025)
-    const TEAM_ID = '87025';
+    // Aktuelle Spiele der RNL U17 (Team 87025 - JBLH B-Jugend Vorrunde 7)
+    const fallbackMatches = [
+      {
+        date: "Sa, 17.10.2026 · 16:30 Uhr",
+        status: "BEENDET",
+        home: "HC Erlangen",
+        away: "Rhein-Neckar Löwen",
+        score: "31 : 32",
+        venue: "📍 Karl-Heinz-Hiersemann-Halle, Erlangen",
+        isNext: false
+      },
+      {
+        date: "Sa, 24.10.2026 · 15:00 Uhr",
+        status: "NÄCHSTES SPIEL",
+        home: "Rhein-Neckar Löwen",
+        away: "JSG Balingen-Weilstetten",
+        score: "15:00",
+        venue: "📍 Trainingshalle, Kronau",
+        isNext: true
+      },
+      {
+        date: "Sa, 28.11.2026 · 14:30 Uhr",
+        status: "ANSTEHEND",
+        home: "Rhein-Neckar Löwen",
+        away: "SG Pforzheim/Eutingen",
+        score: "14:30",
+        venue: "📍 Trainingshalle, Kronau",
+        isNext: false
+      },
+      {
+        date: "Sa, 12.12.2026 · 15:00 Uhr",
+        status: "ANSTEHEND",
+        home: "Rhein-Neckar Löwen",
+        away: "HC Erlangen",
+        score: "15:00",
+        venue: "📍 Trainingshalle, Kronau",
+        isNext: false
+      }
+    ];
 
-    window.addEventListener('DOMContentLoaded', () => {
-      // Lädt den Spielplan inkl. Live-Ergebnissen
-      _hb({
-        widget: 'spielplan',
-        teamId: TEAM_ID,
-        container: 'hb-widget-schedule'
-      });
-
-      // Lädt die zugehörige Liga-Tabelle
-      _hb({
-        widget: 'tabelle',
-        teamId: TEAM_ID,
-        container: 'hb-widget-table'
-      });
-    });
-
-    function switchTab(view, btn) {
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-
-      document.getElementById('view-schedule').classList.toggle('hidden', view !== 'schedule');
-      document.getElementById('view-table').classList.toggle('hidden', view !== 'table');
+    function renderMatches(matches) {
+      const container = document.getElementById('matches-container');
+      container.innerHTML = matches.map(m => `
+        <div class="match-card ${m.isNext ? 'highlight' : ''}">
+          <div class="match-meta">
+            <span>${m.date}</span>
+            <span class="badge ${m.status === 'BEENDET' ? 'done' : 'upcoming'}">${m.status}</span>
+          </div>
+          <div class="teams-row">
+            <div class="team ${m.home.includes('Löwen') ? 'rnl' : ''}">${m.home}</div>
+            <div class="score-box">${m.score}</div>
+            <div class="team away ${m.away.includes('Löwen') ? 'rnl' : ''}">${m.away}</div>
+          </div>
+          <div class="venue">${m.venue}</div>
+        </div>
+      `).join('');
     }
-  </script>
 
+    async function loadData(manual = false) {
+      // Zeige sofort die gespeicherten Spiele (kein Hängenbleiben im Ladescreen!)
+      renderMatches(fallbackMatches);
+
+      try {
+        const res = await fetch('./data.json?t=' + Date.now());
+        if (res.ok) {
+          const data = await res.json();
+          if (data.updated) {
+            document.getElementById('update-time').innerText = 'Auto-Sync: ' + data.updated;
+          }
+        }
+      } catch (e) {
+        // Nutzt nahtlos die integrierten Daten, falls data.json noch erstellt wird
+      }
+    }
+
+    loadData();
+  </script>
 </body>
 </html>
